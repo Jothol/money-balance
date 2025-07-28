@@ -11,7 +11,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body className="flex flex-col h-screen">
         <TopBar />
-        <main className="flex-grow overflow-y-auto bg-blue-50">
+        <main className="flex-grow overflow-y-auto bg-blue-100">
           {children}
         </main>
         <BottomNav />

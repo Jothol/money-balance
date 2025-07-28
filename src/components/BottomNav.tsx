@@ -15,7 +15,7 @@ export default function BottomNav() {
   const router = useRouter();
 
   return (
-    <nav className="w-full h-16 border-t border-gray-300 flex items-center justify-around">
+    <nav className="w-full h-16 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] flex items-center justify-around bg-white">
       {tabs.map(({ name, icon: Icon, path }) => (
         <button
           key={name}
