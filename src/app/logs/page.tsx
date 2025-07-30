@@ -14,7 +14,6 @@ export default function LogsPage() {
 
   return (
     <div className="flex flex-col flex-grow w-full h-full px-4 pb-4">
-      <h1 className="text-lg font-semibold mb-4">Logs</h1>
 
       <TabSwitch
         options={[...tabOptions]} // ✅ convert to mutable string[]
