@@ -20,10 +20,10 @@ export default function Bar({ angle, barLength }: BarProps) {
       style={{ width: `${barLength*1.015}px`, height: 'auto', ...rotationStyle }}
     >
       <Image
-        src="/images/bar.png" // Adjust this path if needed
+        src="/images/bar.png"
         alt="Bar"
         width={barLength}
-        height={barLength / 10} // Adjust height proportionally to keep it thin
+        height={barLength / 10}
         style={{ width: '100%', height: 'auto' }}
         priority
       />

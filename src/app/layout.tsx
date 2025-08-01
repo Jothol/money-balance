@@ -1,7 +1,6 @@
-// src/app/layout.tsx
 'use client';
 
-import '@/globals.css'; // Ensure Tailwind is loaded
+import '@/globals.css';
 import TopBar from '../components/TopBar';
 import BottomNav from '../components/BottomNav';
 import { ReactNode } from 'react';

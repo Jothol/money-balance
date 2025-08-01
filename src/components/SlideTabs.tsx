@@ -19,51 +19,47 @@ export default function SlideTabs({ index, children }: SlideTabsProps) {
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      setPrevIndex(index); // update immediately without animating
+      setPrevIndex(index);
       return;
     }
 
     if (index !== prevIndexRef.current) {
       setIsAnimating(true);
-
       const timeout = setTimeout(() => {
         setPrevIndex(index);
         setIsAnimating(false);
         prevIndexRef.current = index;
-      }, 300); // match animation duration
-
+      }, 300);
       return () => clearTimeout(timeout);
     }
   }, [index, prevIndex]);
 
-  const current = children[index];
-  const previous = children[prevIndex];
-
   return (
     <div className="relative w-full h-full overflow-hidden">
-      {/* OUTGOING tab (only shown during transition) */}
-      {isAnimating && (
-        <motion.div
-          key={`prev-${prevIndex}`}
-          initial={{ x: '0%' }}
-          animate={{ x: `${100 * direction}%` }}
-          transition={{ duration: 0.3, ease: 'easeInOut' }}
-          className="absolute w-full h-full top-0 left-0 z-10"
-        >
-          {previous}
-        </motion.div>
-      )}
+      {children.map((child, i) => {
+        const isActive = i === index;
+        const isPrevious = i === prevIndex;
 
-      {/* INCOMING tab */}
-      <motion.div
-        key={`curr-${index}`}
-        initial={isFirstRender.current ? false : { x: `${-100 * direction}%` }}
-        animate={{ x: '0%' }}
-        transition={{ duration: isFirstRender.current ? 0 : 0.3, ease: 'easeInOut' }}
-        className="absolute w-full h-full top-0 left-0 z-20"
-      >
-        {current}
-      </motion.div>
+        return (
+          <motion.div
+            key={i}
+            initial={false}
+            animate={
+              isActive
+                ? { x: '0%', opacity: 1, zIndex: 20 }
+                : isAnimating && isPrevious
+                ? { x: `${100 * direction}%`, opacity: 0, zIndex: 10 }
+                : { opacity: 0, zIndex: 0 }
+            }
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className={`absolute w-full h-full top-0 left-0 ${
+              !isActive && !isPrevious ? 'pointer-events-none' : ''
+            }`}
+          >
+            {child}
+          </motion.div>
+        );
+      })}
     </div>
   );
 }

@@ -1,9 +1,12 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import TabSwitch from '@/components/TabSwitch';
 import SlideTabs from '@/components/SlideTabs';
 import Scale, { ScaleHandle } from '@/components/scale/Scale';
+import { useExpenses } from '@/hooks/useExpenses';
+import { useUserEmail } from '@/hooks/useUser';
+import { useEffect } from 'react';
 
 export default function HomePage() {
   const [selectedTab, setSelectedTab] = useState<'Balance' | 'Totals'>('Balance');
@@ -11,17 +14,30 @@ export default function HomePage() {
 
   const scaleRef = useRef<ScaleHandle>(null);
 
-  const [share1, setShare1] = useState(0);
-  const [share2, setShare2] = useState(0);
-  const [direct1, setDirect1] = useState(0);
-  const [direct2, setDirect2] = useState(0);
+  const { getShared, getPaymentsFrom, getGiftsFrom } = useExpenses();
+  const { email } = useUserEmail();
+  
+  const otherEmail = email === 'jontholsen@gmail.com' ? 'lexyrak32@gmail.com' : 'jontholsen@gmail.com';
 
-  // Call setBalance whenever inputs change
+  const directToUser = [...getPaymentsFrom(email), ...getGiftsFrom(email)].reduce((sum, e) => sum + e.amount, 0);
+  const directToOther = [...getPaymentsFrom(otherEmail), ...getGiftsFrom(otherEmail)].reduce((sum, e) => sum + e.amount, 0);
+  const sharedByUser = getShared(email).reduce((sum, e) => sum + e.amount, 0);
+  const sharedByOther = getShared(otherEmail).reduce((sum, e) => sum + e.amount, 0);
+
   useEffect(() => {
     if (scaleRef.current) {
-      scaleRef.current.setBalance(share1, share2, direct1, direct2);
+      scaleRef.current.setBalance(
+        sharedByUser,
+        sharedByOther,
+        directToUser,
+        directToOther
+      );
     }
-  }, [share1, share2, direct1, direct2]);
+  }, [sharedByUser, sharedByOther, directToUser, directToOther]);
+
+
+  const balance = (sharedByOther - sharedByUser) / 2 + directToOther - directToUser;
+
 
   return (
     <div className="flex flex-col flex-grow w-full h-full px-4 pb-4">
@@ -33,53 +49,46 @@ export default function HomePage() {
 
       <div className="mt-4 flex-grow relative">
         <SlideTabs index={tabIndex}>
-          <div className='mt-4 flex-grow relative border border-red-600'>
+          <div className="mt-4 flex-grow relative">
             <div className="p-4 space-y-6">
-                  <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-                    <div>
-                      <label className="text-sm font-medium block">Share 1</label>
-                      <input
-                        type="number"
-                        value={share1}
-                        onChange={(e) => setShare1(Number(e.target.value))}
-                        className="w-full border border-gray-300 px-2 py-1 rounded"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium block">Share 2</label>
-                      <input
-                        type="number"
-                        value={share2}
-                        onChange={(e) => setShare2(Number(e.target.value))}
-                        className="w-full border border-gray-300 px-2 py-1 rounded"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium block">Direct 1</label>
-                      <input
-                        type="number"
-                        value={direct1}
-                        onChange={(e) => setDirect1(Number(e.target.value))}
-                        className="w-full border border-gray-300 px-2 py-1 rounded"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium block">Direct 2</label>
-                      <input
-                        type="number"
-                        value={direct2}
-                        onChange={(e) => setDirect2(Number(e.target.value))}
-                        className="w-full border border-gray-300 px-2 py-1 rounded"
-                      />
-                    </div>
-                  </div>
+              {/* Scale */}
+              <div className="flex justify-center mt-8">
+                <Scale ref={scaleRef} />
+              </div>
 
-                  <div className="flex justify-center mt-8">
-                    <Scale ref={scaleRef} />
-                  </div>
+              {/* Totals and balance */}
+              <div className="mt-8 text-center space-y-4">
+                <h2 className="text-lg font-bold">Breakdown</h2>
+
+                <div>
+                  <p>Shared by you: ${sharedByUser.toFixed(2)}</p>
+                  <p>Shared by partner: ${sharedByOther.toFixed(2)}</p>
                 </div>
+
+                <div>
+                  <p>Direct to you: ${directToUser.toFixed(2)}</p>
+                  <p>Direct to partner: ${directToOther.toFixed(2)}</p>
+                </div>
+
+                <div className="font-semibold mt-2">
+                  {
+                    balance > 0 ? (
+                      <p>Partner owes you ${balance.toFixed(2)}</p>
+                    ) : balance < 0 ? (
+                      <p>You owe partner ${Math.abs(balance).toFixed(2)}</p>
+                    ) : (
+                      <p>You’re even!</p>
+                    )
+                  }
+                </div>
+              </div>
+            </div>
           </div>
-          <div className='mt-4 flex-grow relative border border-red-600'>Totals content here</div>
+
+          {/* Totals tab */}
+          <div className="mt-4 flex-grow relative">
+            Totals content here
+          </div>
         </SlideTabs>
       </div>
     </div>
