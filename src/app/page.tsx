@@ -14,27 +14,43 @@ export default function HomePage() {
 
   const scaleRef = useRef<ScaleHandle>(null);
 
-  const { getShared, getPaymentsFrom, getGiftsFrom } = useExpenses();
-  const { email } = useUserEmail();
-  
+  const { getShared, getPaymentsFrom, getGiftsFrom, loading: expensesLoading } = useExpenses();
+  const { email, loading: userLoading } = useUserEmail();
+
   const otherEmail = email === 'jontholsen@gmail.com' ? 'lexyrak32@gmail.com' : 'jontholsen@gmail.com';
 
-  const directToUser = [...getPaymentsFrom(email), ...getGiftsFrom(email)].reduce((sum, e) => sum + e.amount, 0);
-  const directToOther = [...getPaymentsFrom(otherEmail), ...getGiftsFrom(otherEmail)].reduce((sum, e) => sum + e.amount, 0);
-  const sharedByUser = getShared(email).reduce((sum, e) => sum + e.amount, 0);
-  const sharedByOther = getShared(otherEmail).reduce((sum, e) => sum + e.amount, 0);
+  const directToUser = email ? [...getPaymentsFrom(email), ...getGiftsFrom(email)].reduce((sum, e) => sum + e.amount, 0) : 0;
+  const directToOther = email ? [...getPaymentsFrom(otherEmail), ...getGiftsFrom(otherEmail)].reduce((sum, e) => sum + e.amount, 0) : 0;
+  const sharedByUser = email ? getShared(email).reduce((sum, e) => sum + e.amount, 0) : 0;
+  const sharedByOther = email ? getShared(otherEmail).reduce((sum, e) => sum + e.amount, 0) : 0;
 
   useEffect(() => {
-    if (scaleRef.current) {
-      scaleRef.current.setBalance(
-        sharedByUser,
-        sharedByOther,
-        directToUser,
-        directToOther
-      );
-    }
-  }, [sharedByUser, sharedByOther, directToUser, directToOther]);
+    if (
+      userLoading ||
+      expensesLoading ||
+      !email ||
+      !scaleRef.current
+    ) return;
 
+    scaleRef.current.setBalance(
+      sharedByUser,
+      sharedByOther,
+      directToUser,
+      directToOther
+    );
+  }, [
+    userLoading,
+    expensesLoading,
+    email,
+    sharedByUser,
+    sharedByOther,
+    directToUser,
+    directToOther,
+  ]);
+
+  if (userLoading || expensesLoading || !email) {
+    return <p className="text-center mt-20 text-gray-500">Loading...</p>;
+  }
 
   const balance = (sharedByOther - sharedByUser) / 2 + directToOther - directToUser;
 
@@ -73,9 +89,9 @@ export default function HomePage() {
                 <div className="font-semibold mt-2">
                   {
                     balance > 0 ? (
-                      <p>Partner owes you ${balance.toFixed(2)}</p>
+                      <p>You owe partner ${balance.toFixed(2)}</p>
                     ) : balance < 0 ? (
-                      <p>You owe partner ${Math.abs(balance).toFixed(2)}</p>
+                      <p>Partner owes you ${Math.abs(balance).toFixed(2)}</p>
                     ) : (
                       <p>You’re even!</p>
                     )

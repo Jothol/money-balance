@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db, auth } from '@/firebase/firebase';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db } from '@/firebase/firebase';
 import { Expense } from '@/types/Expense';
 
 export function useExpenses() {
@@ -9,12 +9,9 @@ export function useExpenses() {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const uid = auth.currentUser?.uid;
-    if (!uid) return;
-
-    async function fetchExpenses() {
-      try {
-        const snapshot = await getDocs(collection(db, 'expenses'));
+    const unsubscribe = onSnapshot(
+      collection(db, 'expenses'),
+      (snapshot) => {
         const data: Expense[] = snapshot.docs.map(doc => {
           const raw = doc.data();
           return {
@@ -25,25 +22,29 @@ export function useExpenses() {
             ...raw,
           } as Expense;
         });
+
         setExpenses(data);
-      } catch (err) {
-        setError(err as Error);
-      } finally {
+        setLoading(false);
+      },
+      (err) => {
+        console.error('Failed to listen to expenses:', err);
+        setError(err);
         setLoading(false);
       }
-    }
+    );
 
-    fetchExpenses();
+    return unsubscribe;
   }, []);
 
-  const getShared = (user: string) =>
-    expenses.filter(e => e.shared && e.user === user && e.type !== 'gift' && e.type !== 'payment');
-
-  const getPaymentsFrom = (user: string) =>
-    expenses.filter(e => e.type === 'payment' && e.from === user);
-
-  const getGiftsFrom = (user: string) =>
-    expenses.filter(e => e.type === 'gift' && e.user === user);
-
-  return { expenses, loading, error, getShared, getPaymentsFrom, getGiftsFrom };
+  return {
+    expenses,
+    loading,
+    error,
+    getShared: (user: string) =>
+      expenses.filter(e => e.shared && e.user === user && e.type !== 'gift' && e.type !== 'payment'),
+    getPaymentsFrom: (user: string) =>
+      expenses.filter(e => e.type === 'payment' && e.from === user),
+    getGiftsFrom: (user: string) =>
+      expenses.filter(e => e.type === 'gift' && e.user === user),
+  };
 }

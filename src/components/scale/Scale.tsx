@@ -104,7 +104,8 @@ const Scale = forwardRef<ScaleHandle>((_, ref) => {
 
       prevCounts.current = { leftGold, leftSilver, rightGold, rightSilver };
 
-      setTimeout(updateAngle, 0);
+      requestAnimationFrame(() => requestAnimationFrame(updateAngle));
+
     },
 
     updateBalance: (share1, share2, direct1, direct2) => {
@@ -139,7 +140,8 @@ const Scale = forwardRef<ScaleHandle>((_, ref) => {
         rightSilver: newRightSilver,
       };
 
-      setTimeout(updateAngle, 0);
+      requestAnimationFrame(() => requestAnimationFrame(updateAngle));
+
     },
   }));
 
