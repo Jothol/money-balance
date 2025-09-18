@@ -1,4 +1,3 @@
-// hooks/useExpenses.ts
 import { useEffect, useState } from 'react';
 import {
   collection,
@@ -11,9 +10,19 @@ import {
   type QueryDocumentSnapshot,
   type DocumentData,
   type Unsubscribe,
+  type QueryConstraint,
 } from 'firebase/firestore';
 import { db } from '@/firebase/firebase';
 import type { Expense } from '@/types/Expense';
+
+type PeriodKind = 'day' | 'week' | 'month';
+
+export interface UseExpensesOptions {
+  kind?: PeriodKind;        // 'day' | 'week' | 'month'
+  periodId?: string;        // e.g. '2025-08-01' | '2025-W31' | '2025-08'
+  includeArchived?: boolean; // default false
+  orderByCreatedAtDesc?: boolean; // default true
+}
 
 const lower = (s?: string | null) => (s ?? '').toLowerCase();
 
@@ -34,7 +43,14 @@ function mapExpenseDoc(d: QueryDocumentSnapshot<DocumentData>, fallbackPairId: s
   };
 }
 
-export function useExpenses(pairId?: string | null) {
+export function useExpenses(pairId?: string | null, opts?: UseExpensesOptions) {
+  const {
+    kind,
+    periodId,
+    includeArchived = false,
+    orderByCreatedAtDesc = true,
+  } = opts ?? {};
+
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState<boolean>(!!pairId);
   const [error, setError] = useState<Error | null>(null);
@@ -56,14 +72,34 @@ export function useExpenses(pairId?: string | null) {
     };
 
     const start = (withOrder: boolean) => {
-      const base = [collection(db, 'expenses'), where('pairId', '==', pairId)] as const;
-      const qy = withOrder ? query(...base, orderBy('createdAt', 'desc')) : query(...base);
+      const constraints: QueryConstraint[] = [
+        where('pairId', '==', pairId),
+      ];
+
+      if (!includeArchived) {
+        constraints.push(where('archived', '==', false));
+      }
+
+      if (kind && periodId) {
+        // Filter by the period field (e.g., 'day', 'week', 'month')
+        constraints.push(where(kind, '==', periodId));
+      }
+
+      const baseQuery = query(
+        collection(db, 'expenses'),
+        ...constraints
+      );
+
+      const qy = withOrder && orderByCreatedAtDesc
+        ? query(baseQuery, orderBy('createdAt', 'desc'))
+        : baseQuery;
+
       unsub = onSnapshot(
         qy,
         onNext,
         (err: FirestoreError) => {
-          // If a composite index is missing for (pairId asc, createdAt desc), fall back without orderBy
-          if (err.code === 'failed-precondition' && !fellBack) {
+          // Missing composite index? fall back without orderBy once.
+          if (err.code === 'failed-precondition' && withOrder && !fellBack) {
             fellBack = true;
             start(false);
           } else {
@@ -75,10 +111,8 @@ export function useExpenses(pairId?: string | null) {
     };
 
     start(true);
-    return () => {
-      if (unsub) unsub();
-    };
-  }, [pairId]);
+    return () => { if (unsub) unsub(); };
+  }, [pairId, kind, periodId, includeArchived, orderByCreatedAtDesc]);
 
   // Case-insensitive helpers
   const getShared = (userEmail: string) =>

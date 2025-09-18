@@ -1,6 +1,7 @@
 // lib/expenses.ts
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/firebase/firebase';
+import { toDayId, toWeekId, toMonthId } from '@/lib/period';
 
 export type PurchaseKind = 'shared' | 'personal' | 'private' | 'gift';
 
@@ -10,23 +11,35 @@ export interface AddPurchaseInput {
   kind: PurchaseKind;
   userEmail: string;
   pairId: string;
-  partnerEmail?: string; // for gifts
+  partnerEmail?: string;
 }
 
 export async function addPurchase(input: AddPurchaseInput) {
   const { amount, description, kind, userEmail, pairId, partnerEmail } = input;
+  const now = new Date();
+  const purchaseType: 'purchase' | 'gift' = kind === 'gift' ? 'gift' : 'purchase';
+
   const base = {
-    user: userEmail,
+    user: userEmail.toLowerCase(),
     amount,
     description,
-    date: new Date().toISOString().slice(0, 10),
+    date: toDayId(now),
+    day: toDayId(now),
+    week: toWeekId(now),
+    month: toMonthId(now),
     shared: kind === 'shared',
     isPrivate: kind === 'private',
-    type: kind === 'gift' ? 'gift' : 'purchase' as const,
+    archived: false,
+    type: purchaseType,
     createdAt: serverTimestamp(),
     pairId,
   };
-  const docData = kind === 'gift' && partnerEmail ? { ...base, to: partnerEmail } : base;
+
+  const docData =
+    kind === 'gift' && partnerEmail
+      ? { ...base, to: partnerEmail.toLowerCase() }
+      : base;
+
   await addDoc(collection(db, 'expenses'), docData);
 }
 
@@ -38,17 +51,24 @@ export interface SendPaymentInput {
 }
 
 export async function sendPayment({ amount, fromEmail, toEmail, pairId }: SendPaymentInput) {
+  const now = new Date();
+
   const doc = {
-    type: 'payment' as const,
-    from: fromEmail,
-    to: toEmail,
+    type: 'payment',
+    from: fromEmail.toLowerCase(),
+    to: toEmail.toLowerCase(),
     amount,
     shared: true,
     isPrivate: false,
-    date: new Date().toISOString().slice(0, 10),
+    date: toDayId(now),
+    day: toDayId(now),
+    week: toWeekId(now),
+    month: toMonthId(now),
+    archived: false,
     createdAt: serverTimestamp(),
     pairId,
   };
+
   await addDoc(collection(db, 'expenses'), doc);
 }
 
