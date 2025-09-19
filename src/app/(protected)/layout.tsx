@@ -2,19 +2,37 @@
 
 import TopBar from '@/components/TopBar';
 import BottomNav from '@/components/BottomNav';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/firebase/firebase';
+import { hasPair } from '@/lib/hasPair';
 
 export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [ready, setReady] = useState(false);
+  const navigated = useRef(false);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, u => {
-      if (!u) router.replace('/');
-      else setReady(true);
+    const unsub = onAuthStateChanged(auth, async u => {
+      if (!u) {
+        if (!navigated.current) {
+          navigated.current = true;
+          router.replace('/');
+        }
+        setReady(false);
+        return;
+      }
+      const ok = await hasPair(u.uid);
+      if (!ok) {
+        if (!navigated.current) {
+          navigated.current = true;
+          router.replace('/link');
+        }
+        setReady(false);
+        return;
+      }
+      setReady(true);
     });
     return () => unsub();
   }, [router]);
