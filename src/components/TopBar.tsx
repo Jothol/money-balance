@@ -1,29 +1,30 @@
-'use client';
+'use client'
 
-import { useRouter } from 'next/navigation';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/firebase/firebase';
+import { useRouter } from 'next/navigation'
+import { signOut } from 'firebase/auth'
+import { auth } from '@/firebase/firebase'
+import { usePairUsers } from '@/hooks/usePairUsers'
 
 export default function TopBar() {
-  const router = useRouter();
+  const router = useRouter()
+  const { self } = usePairUsers()
+  const first = self?.firstName?.trim() || (self?.email ? self.email.split('@')[0] : 'there')
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await signOut(auth)
     } finally {
-      if (typeof window !== 'undefined') localStorage.removeItem('activePairId');
-      router.replace('/');
+      if (typeof window !== 'undefined') localStorage.removeItem('activePairId')
+      router.replace('/')
     }
-  };
+  }
 
   return (
-    <header className="w-full h-20 bg-gradient-to-b from-blue-700 to-blue-300 flex items-center justify-between px-4 text-lg font-bold">
-      <button
-        onClick={handleLogout}
-        className="px-3 py-1.5 rounded-lg bg-zinc-900 text-white text-sm"
-      >
+    <header className="w-full h-20 bg-gradient-to-b from-blue-700 to-blue-300 flex items-center justify-between px-4">
+      <div className="text-lg font-bold">Hi, {first}</div>
+      <button onClick={handleLogout} className="px-3 py-1.5 rounded-lg bg-zinc-900 text-white text-sm">
         Log out
       </button>
     </header>
-  );
+  )
 }
