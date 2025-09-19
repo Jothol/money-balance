@@ -12,7 +12,7 @@ export default function TopBar() {
       await signOut(auth);
     } finally {
       if (typeof window !== 'undefined') localStorage.removeItem('activePairId');
-      router.replace('/login');
+      router.replace('/');
     }
   };
 
