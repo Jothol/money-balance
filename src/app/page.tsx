@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/firebase/firebase';
-import { hasPair } from '@/lib/hasPair';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,18 +12,16 @@ export default function LoginPage() {
   const [initializing, setInitializing] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const handled = useRef(false);
+  const bypassAuthListener = useRef(false);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async u => {
+    const unsub = onAuthStateChanged(auth, u => {
       if (!u) {
         setInitializing(false);
         return;
       }
-      if (handled.current) return;
-      handled.current = true;
-      const ok = await hasPair(u.uid);
-      router.replace(ok ? '/totals' : '/link');
+      if (bypassAuthListener.current) return;
+      router.replace('/totals');
     });
     return () => unsub();
   }, [router]);
@@ -33,13 +30,13 @@ export default function LoginPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
-      handled.current = true;
-      const ok = await hasPair(cred.user.uid);
-      router.replace(ok ? '/totals' : '/link');
+      bypassAuthListener.current = true;
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      router.replace('/link');
     } catch (e) {
       const code = (e as { code?: string }).code ?? '';
       setError(code === 'auth/invalid-credential' ? 'Invalid email or password' : 'Login failed');
+      bypassAuthListener.current = false;
     } finally {
       setSubmitting(false);
     }

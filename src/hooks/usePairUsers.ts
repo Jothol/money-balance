@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { onAuthStateChanged, User } from 'firebase/auth'
 import { auth } from '@/firebase/firebase'
-import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore'
 import { db } from '@/firebase/firebase'
 import { UserDoc } from '@/types/User'
 import { PairDoc } from '@/types/Pair'
@@ -13,10 +13,10 @@ type PairLegacy = { user1Id?: string; user2Id?: string }
 export function usePairUsers() {
   const [authUser, setAuthUser] = useState<User | null>(null)
   const [selfUid, setSelfUid] = useState<string | null>(null)
+  const [pairId, setPairId] = useState<string | null>(null)
   const [partnerUid, setPartnerUid] = useState<string | null>(null)
   const [self, setSelf] = useState<UserDoc | null>(null)
   const [partner, setPartner] = useState<UserDoc | null>(null)
-  const [pairId, setPairId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -29,74 +29,113 @@ export function usePairUsers() {
 
   useEffect(() => {
     let cancelled = false
-    async function run() {
+    async function resolvePreferredPair(uid: string) {
+      const local = typeof window !== 'undefined' ? localStorage.getItem('activePairId') : null
+      if (local) {
+        const ok = await verifyMembership(uid, local)
+        if (ok) return local
+      }
+      const selfSnap = await getDoc(doc(db, 'users', uid))
+      const active = selfSnap.exists() ? (selfSnap.data() as UserDoc).activePairId ?? null : null
+      if (active) {
+        const ok = await verifyMembership(uid, active)
+        if (ok) return active
+      }
+      const found = await findFirstPair(uid)
+      return found
+    }
+
+    async function verifyMembership(uid: string, pid: string) {
+      const p = await getDoc(doc(db, 'pairs', pid))
+      if (!p.exists()) return false
+      const d = p.data() as Partial<PairDoc & PairLegacy>
+      if (Array.isArray(d.members) && d.members.includes(uid)) return true
+      if ((d.user1Id === uid && d.user2Id) || (d.user2Id === uid && d.user1Id)) return true
+      return false
+    }
+
+    async function findFirstPair(uid: string) {
+      const col = collection(db, 'pairs')
+      const rNew = await getDocs(query(col, where('members', 'array-contains', uid)))
+      if (!rNew.empty) return rNew.docs[0].id
+      const [r1, r2] = await Promise.all([
+        getDocs(query(col, where('user1Id', '==', uid))),
+        getDocs(query(col, where('user2Id', '==', uid)))
+      ])
+      const merged = [...r1.docs, ...r2.docs]
+      if (merged.length === 0) return null
+      return merged[0].id
+    }
+
+    async function load() {
       if (!authUser || !selfUid) {
         setSelf(null)
         setPartner(null)
-        setPartnerUid(null)
         setPairId(null)
+        setPartnerUid(null)
         setLoading(false)
         return
       }
       setLoading(true)
-      try {
-        const pairsCol = collection(db, 'pairs')
-        const snapNew = await getDocs(query(pairsCol, where('members', 'array-contains', selfUid)))
-        if (!snapNew.empty) {
-          const first = snapNew.docs[0]
-          const data = first.data() as PairDoc
-          const members = Array.isArray(data.members) ? data.members : []
-          const other = members.find(m => m !== selfUid) ?? null
-          setPairId(first.id)
-          setPartnerUid(other)
-        } else {
-          const [r1, r2] = await Promise.all([
-            getDocs(query(pairsCol, where('user1Id', '==', selfUid))),
-            getDocs(query(pairsCol, where('user2Id', '==', selfUid)))
-          ])
-          const merged = [...r1.docs, ...r2.docs]
-          if (merged.length > 0) {
-            const first = merged[0]
-            const data = first.data() as PairLegacy
-            const other = data.user1Id === selfUid ? String(data.user2Id ?? '') : String(data.user1Id ?? '')
-            setPairId(first.id)
-            setPartnerUid(other || null)
-          } else {
-            setPairId(null)
-            setPartnerUid(null)
-          }
-        }
 
-        const selfSnap = await getDoc(doc(db, 'users', selfUid))
-        const selfDoc: UserDoc | null = selfSnap.exists()
-          ? (selfSnap.data() as UserDoc)
-          : { firstName: authUser.displayName?.split(' ')[0] ?? '', lastName: '', email: authUser.email ?? '' }
+      const preferred = await resolvePreferredPair(selfUid)
+      if (!preferred) {
+        setPairId(null)
+        setPartnerUid(null)
+        setSelf(await readUser(selfUid, authUser))
+        setPartner(null)
+        setLoading(false)
+        return
+      }
+
+      const partnerUidResolved = await resolvePartnerUid(selfUid, preferred)
+      setPairId(preferred)
+      setPartnerUid(partnerUidResolved)
+
+      const [selfDoc, partnerDoc] = await Promise.all([readUser(selfUid, authUser), partnerUidResolved ? readUser(partnerUidResolved, null) : Promise.resolve(null)])
+      if (!cancelled) {
         setSelf(selfDoc)
-
-        if (partnerUid) {
-          const pSnap = await getDoc(doc(db, 'users', partnerUid))
-          const pDoc: UserDoc | null = pSnap.exists() ? (pSnap.data() as UserDoc) : null
-          setPartner(pDoc)
-        } else {
-          setPartner(null)
-        }
-
-        if (!cancelled) setLoading(false)
-      } catch {
-        if (!cancelled) {
-          setSelf(null)
-          setPartner(null)
-          setPairId(null)
-          setPartnerUid(null)
-          setLoading(false)
-        }
+        setPartner(partnerDoc)
+        setLoading(false)
       }
     }
-    run()
+
+    async function resolvePartnerUid(uid: string, pid: string) {
+      const p = await getDoc(doc(db, 'pairs', pid))
+      if (!p.exists()) return null
+      const d = p.data() as Partial<PairDoc & PairLegacy>
+      if (Array.isArray(d.members)) {
+        const other = d.members.find(m => m !== uid) ?? null
+        return other ?? null
+      }
+      const other = d.user1Id === uid ? String(d.user2Id ?? '') : String(d.user1Id ?? '')
+      return other || null
+    }
+
+    async function readUser(uid: string, fallbackFromAuth: User | null) {
+      const s = await getDoc(doc(db, 'users', uid))
+      if (s.exists()) return s.data() as UserDoc
+      return {
+        firstName: fallbackFromAuth?.displayName?.split(' ')[0] ?? '',
+        lastName: '',
+        email: fallbackFromAuth?.email ?? ''
+      }
+    }
+
+    load()
     return () => {
       cancelled = true
     }
-  }, [authUser, selfUid, partnerUid])
+  }, [authUser, selfUid])
 
-  return { self, partner, selfUid, partnerUid, pairId, loading }
+  async function setActivePair(id: string) {
+    if (!selfUid) return
+    if (typeof window !== 'undefined') localStorage.setItem('activePairId', id)
+    try {
+      await setDoc(doc(db, 'users', selfUid), { activePairId: id }, { merge: true })
+    } catch {}
+    setPairId(id)
+  }
+
+  return { self, partner, selfUid, partnerUid, pairId, loading, setActivePair }
 }
