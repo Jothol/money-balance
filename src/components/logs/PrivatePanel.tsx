@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { usePairUsers } from '@/hooks/usePairUsers';
-import { usePrivateExpenses } from '@/hooks/usePrivateExpenses';
+import { useExpenses } from '@/hooks/useExpensesStore';
 import { Expense } from '@/types/Expense';
 
 function formatMoney(n: number) {
@@ -17,30 +17,28 @@ function formatLocalDate(ymd: string) {
 function groupByDate(items: Expense[]) {
   const map = new Map<string, Expense[]>();
   for (const it of items) {
-    const key = it.date;
-    const arr = map.get(key) ?? [];
+    const arr = map.get(it.date) ?? [];
     arr.push(it);
-    map.set(key, arr);
+    map.set(it.date, arr);
   }
-  const entries = Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  return entries;
+  return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
 }
 
 export default function PrivatePanel() {
-  const { pairId, loading: pairLoading, self } = usePairUsers();
-  const ready = useMemo(() => typeof pairId === 'string' && pairId.length > 0 && !pairLoading, [pairId, pairLoading]);
+  const { self } = usePairUsers();
   const selfEmailLower = self?.emailLower ?? '';
-  const { items, loading, error, refresh } = usePrivateExpenses(ready ? String(pairId) : '', selfEmailLower);
+  const { state } = useExpenses();
+
+  const items = useMemo(
+    () => state.items.filter(e => e.type === 'purchase' && e.isPrivate === true && e.user === selfEmailLower),
+    [state.items, selfEmailLower]
+  );
+
   const groups = useMemo(() => groupByDate(items), [items]);
 
-  if (!ready) return <div className="text-gray-500">Loading…</div>;
-
   return (
-    <div className="h-full overflow-y-auto pb-24 pr-1" style={{ WebkitOverflowScrolling: 'touch' }}>
-      {error && <div className="mb-2 text-sm text-red-600">{error}</div>}
-      {loading && items.length === 0 ? (
-        <div className="text-gray-500">Loading…</div>
-      ) : items.length === 0 ? (
+    <div className="h-full overflow-y-auto pb-24 pr-1">
+      {items.length === 0 ? (
         <div className="text-gray-600">No private purchases yet.</div>
       ) : (
         <div className="space-y-4">
@@ -59,9 +57,6 @@ export default function PrivatePanel() {
           ))}
         </div>
       )}
-      <div className="mt-4">
-        <button onClick={refresh} className="text-blue-600 text-sm">Refresh</button>
-      </div>
     </div>
   );
 }

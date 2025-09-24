@@ -7,6 +7,9 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/firebase/firebase';
 import { hasPair } from '@/lib/hasPair';
+import { ExpensesProvider } from '@/hooks/useExpensesStore';
+import PairBootstrapper from '@/components/providers/PairBootstrapper';
+import ReadyGate from '@/components/ReadyGate';
 
 export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -40,12 +43,17 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   if (!ready) return null;
 
   return (
-    <div className="flex flex-col h-full">
-      <TopBar />
-      <main className="flex-grow overflow-y-auto bg-blue-100 -mt-4 pt-4 rounded-t-2xl shadow-[0_-6px_20px_rgba(0,0,0,0.15)] relative z-0">
-        {children}
-      </main>
-      <BottomNav />
-    </div>
+    <ExpensesProvider>
+      <PairBootstrapper />
+      <ReadyGate>
+        <div className="flex flex-col h-full">
+          <TopBar />
+          <main className="flex-1 min-h-0 overflow-y-auto bg-blue-100 -mt-4 pt-4 rounded-t-2xl shadow-[0_-6px_20px_rgba(0,0,0,0.15)] relative z-0">
+            {children}
+          </main>
+          <BottomNav />
+        </div>
+      </ReadyGate>
+    </ExpensesProvider>
   );
 }

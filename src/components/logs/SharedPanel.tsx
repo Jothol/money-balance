@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { usePairUsers } from '@/hooks/usePairUsers';
-import { useSharedExpenses } from '@/hooks/useSharedExpenses';
+import { useExpenses } from '@/hooks/useExpensesStore';
 import { Expense } from '@/types/Expense';
 
 function formatMoney(n: number) {
@@ -10,45 +10,53 @@ function formatMoney(n: number) {
 }
 
 function formatLocalDate(ymd: string) {
-  const [y, m, d] = ymd.split('-').map(n => Number(n));
+  const [y, m, d] = ymd.split('-').map(Number);
   return new Date(y, m - 1, d).toLocaleDateString();
 }
-
 
 function groupByDate(items: Expense[]) {
   const map = new Map<string, Expense[]>();
   for (const it of items) {
-    const key = it.date;
-    const arr = map.get(key) ?? [];
+    const arr = map.get(it.date) ?? [];
     arr.push(it);
-    map.set(key, arr);
+    map.set(it.date, arr);
   }
-  const entries = Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  return entries;
+  return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
 }
 
 export default function SharedPanel() {
-  const { pairId, loading: pairLoading, self, partner, selfEmailLower, partnerEmailLower } = usePairUsers();
-  const ready = useMemo(() => typeof pairId === 'string' && pairId.length > 0 && !pairLoading, [pairId, pairLoading]);
-  const { items, loading, error, refresh } = useSharedExpenses(ready ? String(pairId) : '');
+  const { self, partner, selfEmailLower, partnerEmailLower, loading } = usePairUsers();
+  const { state } = useExpenses();
 
-  const nameFor = (emailLower: string | undefined) => {
+  const namesReady = useMemo(
+    () => !loading && Boolean(self?.firstName) && Boolean(partner?.firstName),
+    [loading, self?.firstName, partner?.firstName]
+  );
+
+  const items = useMemo(
+    () =>
+      namesReady
+        ? state.items.filter(
+            r => r.type === 'payment' || r.type === 'gift' || (r.type === 'purchase' && r.shared === true)
+          )
+        : [],
+    [namesReady, state.items]
+  );
+
+  const groups = useMemo(() => (namesReady ? groupByDate(items) : []), [namesReady, items]);
+
+  if (!namesReady) return null;
+
+  const nameFor = (emailLower?: string) => {
     if (!emailLower) return '';
     if (emailLower === selfEmailLower) return self?.firstName || 'You';
     if (emailLower === partnerEmailLower) return partner?.firstName || 'Partner';
     return emailLower.split('@')[0];
   };
 
-  const groups = useMemo(() => groupByDate(items), [items]);
-
-  if (!ready) return <div className="text-gray-500">Loading…</div>;
-
   return (
-    <div className="h-full overflow-y-auto pb-24 pr-1" style={{ WebkitOverflowScrolling: 'touch' }}>
-      {error && <div className="mb-2 text-sm text-red-600">{error}</div>}
-      {loading && items.length === 0 ? (
-        <div className="text-gray-500">Loading…</div>
-      ) : items.length === 0 ? (
+    <div className="h-full overflow-y-auto pb-24 pr-1">
+      {items.length === 0 ? (
         <div className="text-gray-600">No shared purchases or payments yet.</div>
       ) : (
         <div className="space-y-4">
@@ -58,30 +66,31 @@ export default function SharedPanel() {
               <div className="space-y-2">
                 {rows.map(r => {
                   if (r.type === 'payment') {
-                    const from = nameFor(r.from);
-                    const to = nameFor(r.to);
                     return (
                       <div key={r.id} className="rounded-lg px-3 py-2 bg-white text-sm">
                         <span className="opacity-60 mr-1">(Payment)</span>
-                        <span className="font-semibold">{from}</span> paid <span className="font-semibold">{to}</span> {formatMoney(r.amount)}
+                        <span className="font-semibold">{nameFor(r.from)}</span> paid{' '}
+                        <span className="font-semibold">{nameFor(r.to)}</span> {formatMoney(r.amount)}
                       </div>
                     );
                   }
                   if (r.type === 'gift') {
                     const actor = nameFor(r.user);
-                    const target = actor === (self?.firstName || 'You') ? partner?.firstName || 'Partner' : self?.firstName || 'You';
+                    const target =
+                      actor === (self?.firstName || 'You') ? partner?.firstName || 'Partner' : self?.firstName || 'You';
                     return (
                       <div key={r.id} className="rounded-lg px-3 py-2 bg-white text-sm">
                         <span className="opacity-60 mr-1">(For {target})</span>
-                        <span className="font-semibold">{actor}</span> paid {formatMoney(r.amount)}{r.description ? ` for "${r.description}"` : ''}
+                        <span className="font-semibold">{actor}</span> paid {formatMoney(r.amount)}
+                        {r.description ? ` for "${r.description}"` : ''}
                       </div>
                     );
                   }
-                  const actor = nameFor(r.user);
                   return (
                     <div key={r.id} className="rounded-lg px-3 py-2 bg-white text-sm">
                       <span className="opacity-60 mr-1">(Shared)</span>
-                      <span className="font-semibold">{actor}</span> paid {formatMoney(r.amount)}{r.description ? ` for "${r.description}"` : ''}
+                      <span className="font-semibold">{nameFor(r.user)}</span> paid {formatMoney(r.amount)}
+                      {r.description ? ` for "${r.description}"` : ''}
                     </div>
                   );
                 })}
@@ -90,9 +99,6 @@ export default function SharedPanel() {
           ))}
         </div>
       )}
-      <div className="mt-4">
-        <button onClick={refresh} className="text-blue-600 text-sm">Refresh</button>
-      </div>
     </div>
   );
 }

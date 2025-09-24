@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Home, DollarSign, BookOpen, BarChart3 } from 'lucide-react';
 
 const tabs = [
-  { name: 'Home', icon: Home, path: '/' },
+  { name: 'Home', icon: Home, path: '/totals' },
   { name: 'Pay', icon: DollarSign, path: '/pay' },
   { name: 'Logs', icon: BookOpen, path: '/logs' },
   { name: 'Stats', icon: BarChart3, path: '/stats' },

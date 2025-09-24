@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { usePairUsers } from '@/hooks/usePairUsers';
-import { usePersonalExpenses } from '@/hooks/usePersonalExpenses';
+import { useExpenses } from '@/hooks/useExpensesStore';
 import { Expense } from '@/types/Expense';
 
 function formatMoney(n: number) {
@@ -17,21 +17,23 @@ function formatLocalDate(ymd: string) {
 function groupByDate(items: Expense[]) {
   const map = new Map<string, Expense[]>();
   for (const it of items) {
-    const key = it.date;
-    const arr = map.get(key) ?? [];
+    const arr = map.get(it.date) ?? [];
     arr.push(it);
-    map.set(key, arr);
+    map.set(it.date, arr);
   }
-  const entries = Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  return entries;
+  return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
 }
 
 export default function PersonalPanel() {
-  const { pairId, loading: pairLoading, self, partner, selfEmailLower, partnerEmailLower } = usePairUsers();
-  const ready = useMemo(() => typeof pairId === 'string' && pairId.length > 0 && !pairLoading, [pairId, pairLoading]);
-  const { items, loading, error, refresh } = usePersonalExpenses(ready ? String(pairId) : '');
+  const { self, partner, selfEmailLower, partnerEmailLower } = usePairUsers();
+  const { state } = useExpenses();
 
-  const nameFor = (emailLower: string | undefined) => {
+  const items = useMemo(
+    () => state.items.filter(e => e.type === 'purchase' && e.shared === false && e.isPrivate === false),
+    [state.items]
+  );
+
+  const nameFor = (emailLower?: string) => {
     if (!emailLower) return '';
     if (emailLower === selfEmailLower) return self?.firstName || 'You';
     if (emailLower === partnerEmailLower) return partner?.firstName || 'Partner';
@@ -40,14 +42,9 @@ export default function PersonalPanel() {
 
   const groups = useMemo(() => groupByDate(items), [items]);
 
-  if (!ready) return <div className="text-gray-500">Loading…</div>;
-
   return (
-    <div className="h-full overflow-y-auto pb-24 pr-1" style={{ WebkitOverflowScrolling: 'touch' }}>
-      {error && <div className="mb-2 text-sm text-red-600">{error}</div>}
-      {loading && items.length === 0 ? (
-        <div className="text-gray-500">Loading…</div>
-      ) : items.length === 0 ? (
+    <div className="h-full overflow-y-auto pb-24 pr-1">
+      {items.length === 0 ? (
         <div className="text-gray-600">No personal purchases yet.</div>
       ) : (
         <div className="space-y-4">
@@ -55,22 +52,17 @@ export default function PersonalPanel() {
             <div key={date} className="rounded-xl p-3 bg-white/60">
               <div className="font-semibold mb-2">{formatLocalDate(date)}</div>
               <div className="space-y-2">
-                {rows.map(r => {
-                  const actor = nameFor(r.user);
-                  return (
-                    <div key={r.id} className="rounded-lg px-3 py-2 bg-white text-sm">
-                      <span className="font-semibold">{actor}</span> paid {formatMoney(r.amount)}{r.description ? ` for "${r.description}"` : ''}
-                    </div>
-                  );
-                })}
+                {rows.map(r => (
+                  <div key={r.id} className="rounded-lg px-3 py-2 bg-white text-sm">
+                    <span className="opacity-60 mr-1">(Personal)</span>
+                    <span className="font-semibold">{nameFor(r.user)}</span> paid {formatMoney(r.amount)}{r.description ? ` for "${r.description}"` : ''}
+                  </div>
+                ))}
               </div>
             </div>
           ))}
         </div>
       )}
-      <div className="mt-4">
-        <button onClick={refresh} className="text-blue-600 text-sm">Refresh</button>
-      </div>
     </div>
   );
 }
