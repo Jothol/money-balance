@@ -9,7 +9,6 @@ export function useExpenses(pairId: string | null | undefined) {
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
-    console.log("PairId: " + pairId)
     if (!pairId) {
       setExpenses([])
       setLoading(false)
