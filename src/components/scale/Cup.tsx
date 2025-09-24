@@ -89,7 +89,7 @@ const Cup = forwardRef<CupHandle, CupProps>(function Cup(
         }}
     >
         <Image
-            src="/images/cup.png"  // Path relative to /public
+            src="/images/cup.png"
             alt="Cup"
             width={cupSize}
             height={cupSize}
