@@ -36,7 +36,8 @@ export default function CreateAccountPage() {
       await setDoc(doc(db, 'users', cred.user.uid), {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        email: email.trim()
+        email: email.trim(),
+        emailLower: email.trim().toLowerCase()
       });
       router.replace('/link');
     } catch (e) {

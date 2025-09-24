@@ -36,7 +36,7 @@ export function usePairUsers() {
         if (ok) return local
       }
       const selfSnap = await getDoc(doc(db, 'users', uid))
-      const active = selfSnap.exists() ? (selfSnap.data() as UserDoc).activePairId ?? null : null
+      const active = selfSnap.exists() ? ((selfSnap.data() as UserDoc).activePairId ?? null) : null
       if (active) {
         const ok = await verifyMembership(uid, active)
         if (ok) return active
@@ -92,7 +92,10 @@ export function usePairUsers() {
       setPairId(preferred)
       setPartnerUid(partnerUidResolved)
 
-      const [selfDoc, partnerDoc] = await Promise.all([readUser(selfUid, authUser), partnerUidResolved ? readUser(partnerUidResolved, null) : Promise.resolve(null)])
+      const [selfDoc, partnerDoc] = await Promise.all([
+        readUser(selfUid, authUser),
+        partnerUidResolved ? readUser(partnerUidResolved, null) : Promise.resolve(null)
+      ])
       if (!cancelled) {
         setSelf(selfDoc)
         setPartner(partnerDoc)
@@ -114,11 +117,21 @@ export function usePairUsers() {
 
     async function readUser(uid: string, fallbackFromAuth: User | null) {
       const s = await getDoc(doc(db, 'users', uid))
-      if (s.exists()) return s.data() as UserDoc
+      if (s.exists()) {
+        const u = s.data() as Partial<UserDoc>
+        return {
+          firstName: u.firstName ?? '',
+          lastName: u.lastName ?? '',
+          email: u.email ?? '',
+          emailLower: u.emailLower ?? (u.email ? String(u.email).toLowerCase() : ''),
+          activePairId: u.activePairId
+        }
+      }
       return {
         firstName: fallbackFromAuth?.displayName?.split(' ')[0] ?? '',
         lastName: '',
-        email: fallbackFromAuth?.email ?? ''
+        email: fallbackFromAuth?.email ?? '',
+        emailLower: fallbackFromAuth?.email ? fallbackFromAuth.email.toLowerCase() : ''
       }
     }
 
@@ -137,5 +150,8 @@ export function usePairUsers() {
     setPairId(id)
   }
 
-  return { self, partner, selfUid, partnerUid, pairId, loading, setActivePair }
+  const selfEmailLower = self?.emailLower ?? ''
+  const partnerEmailLower = partner?.emailLower ?? ''
+
+  return { self, partner, selfUid, partnerUid, pairId, loading, setActivePair, selfEmailLower, partnerEmailLower }
 }

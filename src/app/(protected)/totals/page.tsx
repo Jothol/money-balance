@@ -12,8 +12,8 @@ export default function TotalsPage() {
   const tabIndex = selectedTab === 'Balance' ? 0 : 1
   const scaleRef = useRef<ScaleHandle>(null)
 
-  const { getShared, getPaymentsFrom, getGiftsFrom, loading: expensesLoading } = useExpenses()
-  const { self, partner, loading: pairLoading } = usePairUsers()
+  const { self, partner, pairId, loading: pairLoading } = usePairUsers()
+  const { getShared, getPaymentsFrom, getGiftsFrom, loading: expensesLoading } = useExpenses(pairId)
 
   const selfEmail = self?.email ?? null
   const partnerEmail = partner?.email ?? null

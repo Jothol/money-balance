@@ -1,5 +1,6 @@
 export interface Expense {
   id: string;
+  pairId: string
   user?: string;
   from?: string;
   to?: string;

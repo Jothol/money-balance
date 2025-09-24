@@ -1,50 +1,54 @@
-import { useEffect, useState } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '@/firebase/firebase';
-import { Expense } from '@/types/Expense';
+import { useEffect, useState } from 'react'
+import { collection, onSnapshot, query, where } from 'firebase/firestore'
+import { db } from '@/firebase/firebase'
+import { Expense } from '@/types/Expense'
 
-export function useExpenses() {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+export function useExpenses(pairId: string | null | undefined) {
+  const [expenses, setExpenses] = useState<Expense[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
+    console.log("PairId: " + pairId)
+    if (!pairId) {
+      setExpenses([])
+      setLoading(false)
+      return
+    }
+    const q = query(collection(db, 'expenses'), where('pairId', '==', pairId))
     const unsubscribe = onSnapshot(
-      collection(db, 'expenses'),
-      (snapshot) => {
+      q,
+      snapshot => {
         const data: Expense[] = snapshot.docs.map(doc => {
-          const raw = doc.data();
+          const raw = doc.data() as Omit<Expense, 'id'>
           return {
             id: doc.id,
-            type: raw.type ?? 'purchase',
+            ...raw,
+            type: (raw.type as Expense['type']) ?? 'purchase',
             shared: raw.shared ?? false,
             isPrivate: raw.isPrivate ?? false,
-            ...raw,
-          } as Expense;
-        });
-
-        setExpenses(data);
-        setLoading(false);
+          }
+        })
+        setExpenses(data)
+        setLoading(false)
       },
-      (err) => {
-        console.error('Failed to listen to expenses:', err);
-        setError(err);
-        setLoading(false);
+      err => {
+        setError(err as Error)
+        setLoading(false)
       }
-    );
-
-    return unsubscribe;
-  }, []);
+    )
+    return unsubscribe
+  }, [pairId])
 
   return {
     expenses,
     loading,
     error,
-    getShared: (user: string) =>
-      expenses.filter(e => e.shared && e.user === user && e.type !== 'gift' && e.type !== 'payment'),
-    getPaymentsFrom: (user: string) =>
-      expenses.filter(e => e.type === 'payment' && e.from === user),
-    getGiftsFrom: (user: string) =>
-      expenses.filter(e => e.type === 'gift' && e.user === user),
-  };
+    getShared: (email: string) =>
+      expenses.filter(e => e.shared && e.user === email && e.type !== 'gift' && e.type !== 'payment'),
+    getPaymentsFrom: (email: string) =>
+      expenses.filter(e => e.type === 'payment' && e.from === email),
+    getGiftsFrom: (email: string) =>
+      expenses.filter(e => e.type === 'gift' && e.user === email),
+  }
 }
