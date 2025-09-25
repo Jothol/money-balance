@@ -4,10 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "tailwind-init": "node ./node_modules/tailwindcss/lib/cli.js init -p"
+    "tailwind-init": "node ./node_modules/tailwindcss/lib/cli.js init -p",
+    "pwa:assets": "tsx scripts/gen-icons.ts && tsx scripts/gen-manifest.ts",
+    "prebuild": "npm run pwa:assets",
+    "build": "next build"
   },
   "dependencies": {
     "firebase": "^12.0.0",
@@ -26,8 +28,11 @@
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
     "postcss": "^8.5.6",
+    "sharp": "^0.34.4",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
   },
   "description": "This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).",
   "main": "index.js",
