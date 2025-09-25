@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '@/firebase/firebase';
@@ -86,7 +86,7 @@ export default function LinkPage() {
     };
   }, [uid]);
 
-  const refreshInvites = async () => {
+  const refreshInvites = useCallback(async () => {
     if (!uid) return;
     setLoadingInv(true);
     try {
@@ -111,12 +111,12 @@ export default function LinkPage() {
     } finally {
       setLoadingInv(false);
     }
-  };
+  }, [uid, email]);
 
   useEffect(() => {
     if (!uid) return;
     refreshInvites();
-  }, [uid, email]);
+  }, [uid, refreshInvites]);
 
   const handleSelect = async (pairId: string) => {
     if (!uid) return;
