@@ -43,11 +43,11 @@ export default function PrivatePanel() {
       ) : (
         <div className="space-y-4">
           {groups.map(([date, rows]) => (
-            <div key={date} className="rounded-xl p-3 bg-white/60">
+            <div key={date} className="rounded-xl p-3 bg-white/40">
               <div className="font-semibold mb-2">{formatLocalDate(date)}</div>
               <div className="space-y-2">
                 {rows.map(r => (
-                  <div key={r.id} className="rounded-lg px-3 py-2 bg-white text-sm">
+                  <div key={r.id} className="rounded-lg px-3 py-2 bg-white/60 text-sm">
                     <span className="opacity-60 mr-1">(Private)</span>
                     <span className="font-semibold">You</span> paid {formatMoney(r.amount)}{r.description ? ` for "${r.description}"` : ''}
                   </div>

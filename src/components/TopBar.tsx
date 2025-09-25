@@ -20,7 +20,7 @@ export default function TopBar() {
   }
 
   return (
-    <header className="w-full h-20 bg-gradient-to-b from-brand to-blue-300 flex items-center justify-between px-4">
+    <header className="w-full h-20 bg-gradient-to-b from-darkBrand to-lightBrand flex items-center justify-between px-4">
       <div className="text-lg font-bold">Hi, {first}</div>
       <button onClick={handleLogout} className="px-3 py-1.5 rounded-lg bg-zinc-900 text-white text-sm">
         Log out

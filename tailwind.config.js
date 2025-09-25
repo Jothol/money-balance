@@ -6,7 +6,18 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        brand: '#0EA5E9'
+        malibu: '#63e7f7',
+        blueWhale: '#03334c',
+        allports: '#057e9c',
+        scooter: '#34b7d0',
+        veniceBlue: '#076589',
+        pictonBlue: '#45cbe4',
+        easternBlue: '#239bbd',
+        tealBlue: '#084668',
+        brand: '#057e9c',
+        lightBrand: '#34b7d0',
+        darkBrand: '#084668',
+        whiteBrand: '#cde5eb'
       }
     },
   },

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { db } from '@/firebase/firebase';
 import { collection, doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { ReactNode } from 'react';
 
 type ExpenseType = 'purchase' | 'payment' | 'gift';
 type Selection = 'shared' | 'personal' | 'private' | 'gift';
@@ -19,6 +20,24 @@ function localDateYYYYMMDD(): string {
   const d = new Date();
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
   return d.toISOString().slice(0, 10);
+}
+
+function PillButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="relative h-10 rounded-full bg-white backdrop-blur overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.15)] p-[2px] text-sm font-bold"
+    >
+      <span
+        className={`flex h-full w-full items-center justify-center rounded-full px-4 transition-colors duration-300 ease-in-out ${
+          active ? 'bg-darkBrand text-white' : 'bg-transparent text-black/70'
+        }`}
+      >
+        {children}
+      </span>
+    </button>
+  );
 }
 
 export default function ExpenseForm({ pairId, selfEmailLower, partnerEmailLower, partnerName, onSaved }: ExpenseFormProps) {
@@ -126,34 +145,10 @@ export default function ExpenseForm({ pairId, selfEmailLower, partnerEmailLower,
   return (
     <div className="w-full max-w-sm mx-auto space-y-8">
       <div className="grid grid-cols-4 gap-2">
-        <button
-          type="button"
-          onClick={() => setSelection('shared')}
-          className={`h-10 rounded-full shadow text-sm ${selection === 'shared' ? 'bg-blue-600 text-white' : 'bg-white text-black/70'}`}
-        >
-          Shared
-        </button>
-        <button
-          type="button"
-          onClick={() => setSelection('personal')}
-          className={`h-10 rounded-full shadow text-sm ${selection === 'personal' ? 'bg-blue-600 text-white' : 'bg-white text-black/70'}`}
-        >
-          Personal
-        </button>
-        <button
-          type="button"
-          onClick={() => setSelection('private')}
-          className={`h-10 rounded-full shadow text-sm ${selection === 'private' ? 'bg-blue-600 text-white' : 'bg-white text-black/70'}`}
-        >
-          Private
-        </button>
-        <button
-          type="button"
-          onClick={() => setSelection('gift')}
-          className={`h-10 rounded-full shadow text-sm ${selection === 'gift' ? 'bg-blue-600 text-white' : 'bg-white text-black/70'}`}
-        >
-          {labelForGift}
-        </button>
+        <PillButton active={selection === 'shared'} onClick={() => setSelection('shared')}>Shared</PillButton>
+        <PillButton active={selection === 'personal'} onClick={() => setSelection('personal')}>Personal</PillButton>
+        <PillButton active={selection === 'private'} onClick={() => setSelection('private')}>Private</PillButton>
+        <PillButton active={selection === 'gift'} onClick={() => setSelection('gift')}>{labelForGift}</PillButton>
       </div>
 
       <div className="space-y-4">
@@ -185,7 +180,7 @@ export default function ExpenseForm({ pairId, selfEmailLower, partnerEmailLower,
           type="button"
           disabled={!canSaveExpense || savingExpense}
           onClick={saveExpense}
-          className="w-full h-11 rounded-full bg-blue-600 text-white font-semibold disabled:opacity-60"
+          className="w-full h-11 rounded-full bg-darkBrand text-white font-semibold disabled:opacity-60"
         >
           {savingExpense ? 'Saving…' : 'Save Expense'}
         </button>
@@ -212,7 +207,7 @@ export default function ExpenseForm({ pairId, selfEmailLower, partnerEmailLower,
           type="button"
           disabled={!canSendPayment || savingPayment}
           onClick={sendPayment}
-          className="w-full h-11 rounded-full bg-emerald-600 text-white font-semibold disabled:opacity-60"
+          className="w-full h-11 rounded-full bg-darkBrand text-white font-semibold disabled:opacity-60"
         >
           {savingPayment ? 'Sending…' : `Send to ${partnerName || 'Partner'}`}
         </button>

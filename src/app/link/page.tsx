@@ -189,20 +189,20 @@ export default function LinkPage() {
   if (!ready) return null;
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6 bg-zinc-950">
-      <div className="w-full max-w-sm space-y-6 text-white">
+    <main className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-b from-darkBrand to-whiteBrand">
+      <div className="w-full max-w-sm space-y-6">
         <div className="text-center text-xl font-semibold">Select Partner Tracker</div>
 
-        <div className="rounded-lg bg-zinc-900 p-3 max-h-64 overflow-y-auto space-y-2">
+        <div className="rounded-lg bg-white/40 p-3 max-h-64 overflow-y-auto space-y-2">
           {loadingRows ? (
-            <div className="text-zinc-400 text-center">Loading...</div>
+            <div className="text-center">Loading...</div>
           ) : rows.length === 0 ? (
-            <div className="text-zinc-400 text-center">No partners yet</div>
+            <div className="text-center">No partners yet</div>
           ) : (
             rows.map(r => (
-              <div key={r.pairId} className="flex items-center justify-between rounded-md bg-zinc-800 px-3 py-2">
+              <div key={r.pairId} className="flex items-center justify-between rounded-md bg-white/60 px-3 py-2">
                 <div className="text-sm">{r.partnerName}</div>
-                <button onClick={() => handleSelect(r.pairId)} className="px-3 py-1 rounded-md bg-blue-600 text-white text-sm">
+                <button onClick={() => handleSelect(r.pairId)} className="px-3 py-1 rounded-md bg-darkBrand text-white text-sm">
                   Go
                 </button>
               </div>
@@ -212,16 +212,16 @@ export default function LinkPage() {
 
         <div className="space-y-3">
           <div className="font-semibold">Incoming invites</div>
-          <div className="rounded-lg bg-zinc-900 p-3 max-h-56 overflow-y-auto space-y-2">
+          <div className="rounded-lg bg-white/40 p-3 max-h-56 overflow-y-auto space-y-2">
             {loadingInv ? (
-              <div className="text-zinc-400 text-center">Loading...</div>
+              <div className="text-center">Loading...</div>
             ) : incoming.length === 0 ? (
-              <div className="text-zinc-400 text-center">None</div>
+              <div className="text-center">None</div>
             ) : (
               incoming.map(inv => (
                 <div key={inv.id} className="flex items-center justify-between rounded-md bg-zinc-800 px-3 py-2">
                   <div className="text-sm">From {inv.fromName}</div>
-                  <button onClick={() => handleAccept(inv.id, inv.fromUid)} className="px-3 py-1 rounded-md bg-green-600 text-white text-sm">
+                  <button onClick={() => handleAccept(inv.id, inv.fromUid)} className="px-3 py-1 rounded-md bg-darkBrand text-white text-sm">
                     Accept
                   </button>
                 </div>
@@ -232,11 +232,11 @@ export default function LinkPage() {
 
         <div className="space-y-3">
           <div className="font-semibold">Outgoing invites</div>
-          <div className="rounded-lg bg-zinc-900 p-3 max-h-56 overflow-y-auto space-y-2">
+          <div className="rounded-lg bg-white/40 p-3 max-h-56 overflow-y-auto space-y-2">
             {loadingInv ? (
-              <div className="text-zinc-400 text-center">Loading...</div>
+              <div className="text-center">Loading...</div>
             ) : outgoing.length === 0 ? (
-              <div className="text-zinc-400 text-center">None</div>
+              <div className="text-center">None</div>
             ) : (
               outgoing.map(inv => (
                 <div key={inv.id} className="flex items-center justify-between rounded-md bg-zinc-800 px-3 py-2">
@@ -254,7 +254,7 @@ export default function LinkPage() {
           <div className="font-semibold">Send invite by email</div>
           <div className="flex gap-2">
             <input
-              className="flex-1 p-2 rounded-md bg-zinc-900 text-white placeholder-zinc-500"
+              className="flex-1 p-2 rounded-md bg-white/80 placeholder-zinc-500"
               placeholder="name@example.com"
               type="email"
               value={inviteEmail}
@@ -263,7 +263,7 @@ export default function LinkPage() {
             <button
               onClick={handleSendInvite}
               disabled={sendingInvite || inviteEmail.trim().length === 0}
-              className="px-3 py-2 rounded-md bg-blue-600 text-white text-sm"
+              className="px-3 py-2 rounded-md bg-darkBrand text-white text-sm"
             >
               {sendingInvite ? 'Sending...' : 'Send'}
             </button>
@@ -272,7 +272,7 @@ export default function LinkPage() {
           {inviteSuccess && <div className="text-green-400 text-sm">{inviteSuccess}</div>}
         </div>
 
-        <button onClick={handleLogout} className="w-full px-3 py-2 rounded-lg bg-zinc-900 text-white text-sm">
+        <button onClick={handleLogout} className="w-full px-3 py-2 rounded-lg bg-brand text-white text-sm">
           Log out
         </button>
       </div>

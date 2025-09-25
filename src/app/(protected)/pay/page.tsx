@@ -11,7 +11,7 @@ export default function PayPage() {
 
   const ready = useMemo(() => typeof pairId === 'string' && pairId.length > 0 && !loading, [pairId, loading]);
   const ensuredPairId = useMemo(() => (typeof pairId === 'string' ? pairId : ''), [pairId]);
-  const partnerName = `${partner?.firstName ?? ''} ${partner?.lastName ?? ''}`.trim() || 'Partner';
+  const partnerName = `${partner?.firstName ?? ''}`.trim() || 'Partner';
 
   if (!ready) return <div className="p-4 text-gray-500">Loading…</div>;
 

@@ -3,7 +3,7 @@ import { ReactNode } from 'react';
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="bg-brand">
+    <html lang="en" className="bg-darkBrand">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <link rel="manifest" href="/manifest.json" />
@@ -13,7 +13,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <meta name="apple-mobile-web-app-title" content="Money Balance" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
-      <body className="bg-brand">
+      <body className="bg-whiteBrand">
         <div className="app-shell">
           <div className="pt-[env(safe-area-inset-top)] scroll-area">
             {children}

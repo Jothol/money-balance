@@ -85,9 +85,15 @@ export default function LogsPage() {
         <button
           onClick={toggleEdit}
           aria-label="Edit entries"
-          className={`h-10 w-10 rounded-full flex items-center justify-center border transition-colors ${isEditing ? 'bg-blue-500 border-blue-500 text-white' : 'bg-white border-gray-300 text-gray-700'}`}
+          className="relative h-10 w-10 rounded-full bg-white backdrop-blur overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.15)] p-[2px]"
         >
-          <Pencil className="h-5 w-5" />
+          <span
+            className={`flex h-full w-full items-center justify-center rounded-full transition-colors duration-300 ease-in-out ${
+              isEditing ? 'bg-darkBrand text-white' : 'bg-transparent text-black'
+            }`}
+          >
+            <Pencil className="h-5 w-5" />
+          </span>
         </button>
       </div>
 

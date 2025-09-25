@@ -15,7 +15,7 @@ export default function TabSwitch({ options, selected, onSelect, disabled }: Tab
   return (
     <div className={`relative flex w-full max-w-sm mx-auto h-10 rounded-full bg-white text-sm font-bold text-black backdrop-blur overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.15)] ${disabled ? 'opacity-60 pointer-events-none' : ''}`}>
       <div
-        className="absolute inset-y-[2px] left-[2px] rounded-full bg-blue-500 text-white font-bold z-10 transition-transform duration-300 ease-in-out"
+        className="absolute inset-y-[2px] left-[2px] rounded-full bg-darkBrand text-white font-bold z-10 transition-transform duration-300 ease-in-out"
         style={{ width: `${knobWidth - 0.5}%`, transform: `translateX(${selectedIndex * 100}%)` }}
       >
         <div className="flex items-center justify-center h-full relative overflow-hidden">

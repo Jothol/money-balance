@@ -51,37 +51,37 @@ export default function CreateAccountPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
+    <main className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-b from-darkBrand to-whiteBrand">
       <div className="w-full max-w-sm space-y-4">
         <h1 className="text-center text-xl font-semibold">Create account</h1>
         <input
-          className="w-full p-3 rounded-lg bg-zinc-900 text-white"
+          className="w-full p-3 rounded-lg bg-white/80"
           placeholder="First name"
           value={firstName}
           onChange={e => setFirstName(e.target.value)}
         />
         <input
-          className="w-full p-3 rounded-lg bg-zinc-900 text-white"
+          className="w-full p-3 rounded-lg bg-white/80"
           placeholder="Last name"
           value={lastName}
           onChange={e => setLastName(e.target.value)}
         />
         <input
-          className="w-full p-3 rounded-lg bg-zinc-900 text-white"
+          className="w-full p-3 rounded-lg bg-white/80"
           placeholder="Email"
           type="email"
           value={email}
           onChange={e => setEmail(e.target.value)}
         />
         <input
-          className="w-full p-3 rounded-lg bg-zinc-900 text-white"
+          className="w-full p-3 rounded-lg bg-white/80"
           placeholder="Password"
           type="password"
           value={password}
           onChange={e => setPassword(e.target.value)}
         />
         <input
-          className="w-full p-3 rounded-lg bg-zinc-900 text-white"
+          className="w-full p-3 rounded-lg bg-white/80"
           placeholder="Confirm password"
           type="password"
           value={password2}
@@ -90,13 +90,13 @@ export default function CreateAccountPage() {
         <button
           onClick={submit}
           disabled={submitting || !firstName || !lastName || !email || !password || !password2}
-          className="w-full p-3 rounded-lg bg-green-600 text-white"
+          className="w-full p-3 rounded-lg bg-darkBrand text-white"
         >
           {submitting ? 'Creating...' : 'Create account'}
         </button>
         <button
           onClick={() => router.replace('/')}
-          className="w-full p-3 rounded-lg bg-zinc-800 text-white"
+          className="w-full p-3 rounded-lg bg-brand text-white"
         >
           Back to login
         </button>

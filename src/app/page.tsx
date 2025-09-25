@@ -45,18 +45,18 @@ export default function LoginPage() {
   if (initializing) return null;
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
+    <main className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-b from-darkBrand to-whiteBrand">
       <div className="w-full max-w-sm space-y-4">
         <h1 className="text-center text-xl font-semibold">Log in</h1>
         <input
-          className="w-full p-3 rounded-lg bg-zinc-900 text-white"
+          className="w-full p-3 rounded-lg bg-white/80"
           placeholder="Email"
           type="email"
           value={email}
           onChange={e => setEmail(e.target.value)}
         />
         <input
-          className="w-full p-3 rounded-lg bg-zinc-900 text-white"
+          className="w-full p-3 rounded-lg bg-white/80"
           placeholder="Password"
           type="password"
           value={password}
@@ -65,13 +65,13 @@ export default function LoginPage() {
         <button
           onClick={submit}
           disabled={submitting || !email || !password}
-          className="w-full p-3 rounded-lg bg-blue-600 text-white"
+          className="w-full p-3 rounded-lg bg-darkBrand text-white"
         >
           {submitting ? 'Loading...' : 'Log in'}
         </button>
         <button
           onClick={() => router.push('/create-account')}
-          className="w-full p-3 rounded-lg bg-zinc-800 text-white"
+          className="w-full p-3 rounded-lg bg-brand text-white"
         >
           Create account
         </button>

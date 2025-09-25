@@ -48,7 +48,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       <ReadyGate>
         <div className="flex flex-col h-full">
           <TopBar />
-          <main className="flex-1 min-h-0 overflow-y-auto bg-blue-100 -mt-4 pt-4 rounded-t-2xl shadow-[0_-6px_20px_rgba(0,0,0,0.15)] relative z-0">
+          <main className="flex-1 min-h-0 overflow-y-auto bg-whiteBrand -mt-4 pt-4 rounded-t-2xl shadow-[0_-6px_20px_rgba(0,0,0,0.15)] relative z-0">
             {children}
           </main>
           <BottomNav />
